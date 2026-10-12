@@ -44,7 +44,8 @@ const Auth = {
 
   logout() {
     localStorage.removeItem(this.SESSION_KEY);
-    window.location.href = 'index.html';
+    const inPages = window.location.pathname.includes('/pages/');
+    window.location.href = inPages ? '../index.html' : 'index.html';
   },
 
   _startSession(user) {
@@ -58,9 +59,19 @@ const Auth = {
     return (h >>> 0).toString(36);
   },
 
+  resetPassword(email, newPassword) {
+    const users = this.getUsers();
+    const id = email.toLowerCase().trim();
+    if (!users[id]) return { ok: false, error: 'No account found with this email.' };
+    users[id].hash = this._hash(newPassword);
+    this.saveUsers(users);
+    return { ok: true };
+  },
+
   requireAuth() {
     if (!this.currentUser()) {
-      window.location.href = 'index.html';
+      const inPages = window.location.pathname.includes('/pages/');
+      window.location.href = inPages ? '../index.html' : 'index.html';
       return false;
     }
     return true;

@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Faith & Flow — Journal</title>
+  <link rel="stylesheet" href="../css/style.css" />
+  <style>
+    .journal-hero { margin-bottom: 24px; }
+    .journal-hero h1 { color: var(--plum); font-size: 1.7rem; }
+    .journal-hero p { font-size: .875rem; color: var(--muted); margin-top: 4px; }
+
+    .journal-entry {
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: 20px; padding: 20px 22px; margin-bottom: 14px;
+      position: relative; overflow: hidden; transition: box-shadow .2s, transform .2s;
+    }
+    .journal-entry::before {
+      content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+      background: linear-gradient(180deg, var(--lavender), var(--rose));
+      border-radius: 4px 0 0 4px;
+    }
+    .journal-entry:hover { box-shadow: 0 6px 24px rgba(61,31,78,.08); transform: translateY(-1px); }
+
+    .entry-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .entry-date {
+      font-size: .75rem; font-weight: 600; color: var(--mauve);
+      letter-spacing: .04em; text-transform: uppercase;
+    }
+    .entry-mood {
+      font-size: .75rem; color: var(--lavender); background: var(--petal2);
+      border-radius: 99px; padding: 2px 10px; border: 1px solid var(--border);
+    }
+    .entry-gratitude {
+      font-size: .93rem; color: var(--ink); line-height: 1.65;
+      white-space: pre-wrap;
+    }
+    .entry-delete {
+      position: absolute; top: 14px; right: 14px;
+      background: none; border: none; color: var(--muted);
+      cursor: pointer; font-size: .8rem; padding: 3px 7px;
+      border-radius: 7px; transition: color .15s, background .15s;
+    }
+    .entry-delete:hover { color: var(--rose); background: var(--petal2); }
+
+    .empty-journal { text-align: center; padding: 60px 20px; }
+    .empty-journal .e-emoji { font-size: 2.8rem; display: block; margin-bottom: 14px; }
+    .empty-journal p { color: var(--muted); font-size: .875rem; line-height: 1.6; }
+
+    /* filter strip */
+    .filter-strip { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+    .filter-btn {
+      background: var(--blush); border: 1.5px solid var(--border);
+      border-radius: 99px; padding: 5px 14px;
+      font-size: .78rem; cursor: pointer; color: var(--mauve);
+      transition: all .15s; font-family: var(--sans);
+    }
+    .filter-btn.active, .filter-btn:hover {
+      background: linear-gradient(135deg, var(--petal), var(--blush2));
+      border-color: var(--lavender); color: var(--plum);
+    }
+
+    .journal-count {
+      font-size: .75rem; color: var(--muted); margin-bottom: 16px; font-style: italic;
+    }
+
+    /* Today's entry card */
+    .today-card {
+      background: linear-gradient(135deg, var(--plum) 0%, var(--plum2) 100%);
+      border-radius: 22px; padding: 22px 24px; margin-bottom: 22px;
+      box-shadow: 0 8px 32px rgba(61,31,78,.18);
+    }
+    .today-card-label {
+      font-size: .68rem; font-weight: 600; letter-spacing: .1em;
+      text-transform: uppercase; color: var(--rose2); margin-bottom: 12px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .today-card-label::before { content: '✦'; font-size: .7rem; }
+    .today-card textarea {
+      width: 100%; border: 1.5px solid rgba(255,255,255,.2); border-radius: 12px;
+      padding: 12px 14px; font-family: var(--sans); font-size: .9rem;
+      color: #F8F0FF; background: rgba(255,255,255,.1); resize: none;
+      min-height: 80px; outline: none; line-height: 1.6;
+      transition: border-color .2s, background .2s;
+    }
+    .today-card textarea:focus { border-color: rgba(255,255,255,.4); background: rgba(255,255,255,.15); }
+    .today-card textarea::placeholder { color: rgba(240,214,232,.5); }
+    .today-card-actions { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
+    .today-card-saved { font-size: .72rem; color: var(--rose2); opacity: 0; transition: opacity .3s; }
+    .btn-save-today {
+      background: rgba(255,255,255,.15); border: 1.5px solid rgba(255,255,255,.25);
+      border-radius: 10px; padding: 7px 18px; font-family: var(--sans); font-size: .82rem;
+      font-weight: 600; color: #F8F0FF; cursor: pointer; transition: all .18s;
+    }
+    .btn-save-today:hover { background: rgba(255,255,255,.25); }
+  </style>
+</head>
+<body>
+
+<canvas id="petal-canvas"></canvas>
+
+<header class="app-header">
+  <a href="dashboard.html" class="logo"><span class="logo-bloom">🌸</span> Faith &amp; Flow</a>
+  <nav><ul class="nav-links">
+    <li><a href="dashboard.html">Today</a></li>
+    <li><a href="bible.html">Bible</a></li>
+    <li><a href="books.html">Books</a></li>
+    <li><a href="journal.html" class="active">Journal</a></li>
+  </ul></nav>
+  <div class="header-right">
+    <span class="user-name" id="user-name"></span>
+    <button class="btn-logout" onclick="Auth.logout()">Sign out</button>
+  </div>
+</header>
+
+<main class="page-wrap">
+  <div class="journal-hero">
+    <h1>Gratitude Journal</h1>
+    <p>A record of everything your heart has been thankful for 🌸</p>
+  </div>
+
+  <!-- Today's gratitude entry -->
+  <div class="today-card">
+    <div class="today-card-label">Today's Gratitude</div>
+    <textarea id="today-text" placeholder="What are you grateful for today? Or just write what's on your heart…" rows="3"></textarea>
+    <div class="today-card-actions">
+      <span class="today-card-saved" id="save-indicator">✓ Saved</span>
+      <button class="btn-save-today" onclick="saveTodayGratitude()">Save 💜</button>
+    </div>
+  </div>
+
+  <!-- Filter -->
+  <div class="filter-strip" id="filter-strip">
+    <button class="filter-btn active" data-filter="all" onclick="setFilter('all',this)">All entries</button>
+    <button class="filter-btn" data-filter="peaceful" onclick="setFilter('peaceful',this)">☁️ Peaceful</button>
+    <button class="filter-btn" data-filter="grateful" onclick="setFilter('grateful',this)">🙏 Grateful</button>
+    <button class="filter-btn" data-filter="joyful" onclick="setFilter('joyful',this)">✨ Joyful</button>
+    <button class="filter-btn" data-filter="tired" onclick="setFilter('tired',this)">🌙 Tired</button>
+    <button class="filter-btn" data-filter="hopeful" onclick="setFilter('hopeful',this)">🌱 Hopeful</button>
+  </div>
+
+  <div class="journal-count" id="journal-count"></div>
+  <div id="journal-list"></div>
+</main>
+
+<script src="../js/auth.js"></script>
+<script src="../js/store.js"></script>
+<script>
+  if (!Auth.requireAuth()) throw '';
+  document.getElementById('user-name').textContent = Auth.currentUser().name;
+
+  const TODAY = Store.todayKey();
+  let activeFilter = 'all';
+
+  // Prefill today's gratitude
+  const todayDay = Store.getDay(TODAY);
+  document.getElementById('today-text').value = todayDay.gratitude || '';
+
+  // ── Floating petals ───────────────────────────────
+  (function(){
+    const canvas = document.getElementById('petal-canvas');
+    const ctx = canvas.getContext('2d');
+    const petals = [];
+    const EMOJIS = ['🌸','🌺','✿','❀','🌷','✦','⋆'];
+    function resize(){ canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+    window.addEventListener('resize', resize); resize();
+    for (let i = 0; i < 18; i++) {
+      petals.push({
+        x: Math.random()*window.innerWidth, y: Math.random()*window.innerHeight,
+        size: 10+Math.random()*12, speedY: .18+Math.random()*.4,
+        speedX: (Math.random()-.5)*.22, rot: Math.random()*Math.PI*2,
+        rotSpeed: (Math.random()-.5)*.013, opacity: .1+Math.random()*.2,
+        emoji: EMOJIS[Math.floor(Math.random()*EMOJIS.length)],
+        wobble: Math.random()*Math.PI*2, wobbleSpeed: .01+Math.random()*.018,
+      });
+    }
+    function draw(){
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      petals.forEach(p=>{
+        ctx.save(); ctx.globalAlpha=p.opacity;
+        ctx.translate(p.x,p.y); ctx.rotate(p.rot);
+        ctx.font=`${p.size}px serif`; ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText(p.emoji,0,0); ctx.restore();
+        p.y+=p.speedY; p.x+=p.speedX+Math.sin(p.wobble)*.22;
+        p.rot+=p.rotSpeed; p.wobble+=p.wobbleSpeed;
+        if(p.y>canvas.height+20){ p.y=-20; p.x=Math.random()*canvas.width; }
+        if(p.x<-20) p.x=canvas.width+20;
+        if(p.x>canvas.width+20) p.x=-20;
+      });
+      requestAnimationFrame(draw);
+    }
+    draw();
+  })();
+
+  const MOOD_LABELS = {
+    peaceful: '☁️ Peaceful', grateful: '🙏 Grateful', joyful: '✨ Joyful',
+    tired: '🌙 Tired', hopeful: '🌱 Hopeful'
+  };
+
+  let saveTimer;
+  function saveTodayGratitude() {
+    const text = document.getElementById('today-text').value;
+    Store.setGratitude(TODAY, text);
+    const ind = document.getElementById('save-indicator');
+    ind.style.opacity = '1';
+    setTimeout(() => ind.style.opacity = '0', 1800);
+    renderJournal();
+  }
+
+  // autosave on typing
+  document.getElementById('today-text').addEventListener('input', function() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => saveTodayGratitude(), 800);
+  });
+
+  function setFilter(filter, btn) {
+    activeFilter = filter;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b === btn));
+    renderJournal();
+  }
+
+  function renderJournal() {
+    const days = Store._load('days', {});
+    // collect all days with gratitude text
+    let entries = Object.entries(days)
+      .filter(([k, v]) => v.gratitude && v.gratitude.trim())
+      .map(([k, v]) => ({ date: k, gratitude: v.gratitude.trim(), mood: v.mood || '' }))
+      .sort((a, b) => b.date.localeCompare(a.date));
+
+    if (activeFilter !== 'all') {
+      entries = entries.filter(e => e.mood === activeFilter);
+    }
+
+    const list = document.getElementById('journal-list');
+    const count = document.getElementById('journal-count');
+
+    count.textContent = entries.length
+      ? `${entries.length} ${entries.length === 1 ? 'entry' : 'entries'}${activeFilter !== 'all' ? ` — ${MOOD_LABELS[activeFilter]}` : ''}`
+      : '';
+
+    if (!entries.length) {
+      list.innerHTML = `<div class="empty-journal">
+        <span class="e-emoji">📖</span>
+        <p>${activeFilter !== 'all'
+          ? `No entries with that mood yet.<br>Try a different filter or start writing today!`
+          : `No gratitude entries yet.<br>Start by writing what's on your heart today 💜`
+        }</p>
+      </div>`;
+      return;
+    }
+
+    list.innerHTML = entries.map((e, i) => {
+      const d = new Date(e.date);
+      const dateStr = d.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+      const isToday = e.date === TODAY;
+      return `<div class="journal-entry">
+        <div class="entry-top">
+          <div class="entry-date">${isToday ? '✨ Today · ' : ''}${dateStr}</div>
+          ${e.mood ? `<span class="entry-mood">${MOOD_LABELS[e.mood] || e.mood}</span>` : ''}
+        </div>
+        <div class="entry-gratitude">${escHtml(e.gratitude)}</div>
+        ${isToday ? '' : `<button class="entry-delete" onclick="deleteEntry('${e.date}')" title="Delete this entry">✕</button>`}
+      </div>`;
+    }).join('');
+  }
+
+  function escHtml(t) {
+    return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function deleteEntry(dateKey) {
+    if (!confirm('Delete this journal entry?')) return;
+    Store.saveDay(dateKey, { gratitude: '' });
+    renderJournal();
+  }
+
+  renderJournal();
+</script>
+</body>
+</html>

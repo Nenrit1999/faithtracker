@@ -36,6 +36,32 @@ const Store = {
   },
   isChapterRead(book, ch) { return !!this._load('bible', {})[book + '__' + ch]; },
   totalChaptersRead() { return Object.values(this._load('bible', {})).filter(Boolean).length; },
+
+  // Reflections: array of {text, date}
+  getReflections(book, ch) {
+    const all = this._load('refs2', {});
+    const k = book + '__' + ch;
+    // migrate old single-string format
+    if (!all[k]) {
+      const old = this._load('refs', {})[k];
+      if (old && old.trim()) return [{ text: old, date: Date.now() }];
+      return [];
+    }
+    return all[k];
+  },
+  addReflection(book, ch, text) {
+    const all = this._load('refs2', {});
+    const k = book + '__' + ch;
+    if (!all[k]) all[k] = [];
+    all[k].push({ text, date: Date.now() });
+    this._save('refs2', all);
+  },
+  deleteReflection(book, ch, idx) {
+    const all = this._load('refs2', {});
+    const k = book + '__' + ch;
+    if (all[k]) { all[k].splice(idx, 1); this._save('refs2', all); }
+  },
+  // Legacy single-reflection (keep for backward compat)
   getReflection(book, ch) { return (this._load('refs', {})[book + '__' + ch]) || ''; },
   saveReflection(book, ch, text) {
     const r = this._load('refs', {}); r[book + '__' + ch] = text; this._save('refs', r);

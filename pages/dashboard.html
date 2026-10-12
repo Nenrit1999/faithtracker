@@ -16,6 +16,7 @@
     <li><a href="dashboard.html" class="active">Today</a></li>
     <li><a href="bible.html">Bible</a></li>
     <li><a href="books.html">Books</a></li>
+    <li><a href="journal.html">Journal</a></li>
   </ul></nav>
   <div class="header-right">
     <span class="user-name" id="user-name"></span>
@@ -63,7 +64,7 @@
         </svg>
         <div class="ring-val" id="ring-chapters-val">0</div>
       </div>
-      <div class="ring-lbl">chapters read</div>
+      <div class="ring-lbl">Chapters Read</div>
     </div>
     <div class="ring-tile">
       <div class="ring-shimmer"></div>
@@ -78,7 +79,7 @@
         </svg>
         <div class="ring-val" id="ring-streak-val">0</div>
       </div>
-      <div class="ring-lbl">day streak 🔥</div>
+      <div class="ring-lbl">Day Streak 🔥</div>
     </div>
     <div class="ring-tile">
       <div class="ring-shimmer"></div>
@@ -140,11 +141,12 @@
       <button class="mood-btn" data-mood="grateful" onclick="pickMood(this)">🙏 Grateful</button>
       <button class="mood-btn" data-mood="joyful" onclick="pickMood(this)">✨ Joyful</button>
       <button class="mood-btn" data-mood="tired" onclick="pickMood(this)">🌙 Tired</button>
-      <button class="mood-btn" data-mood="struggling" onclick="pickMood(this)">💙 Struggling</button>
+      <button class="mood-btn" data-mood="hopeful" onclick="pickMood(this)">🌱 Hopeful</button>
     </div>
     <textarea class="gratitude-input" id="gratitude-inp"
       placeholder="What are you grateful for today? Or just write what's on your heart…"
-      rows="3" oninput="Store.setGratitude(TODAY, this.value)"></textarea>
+      rows="3" oninput="saveGratitude(this.value)"></textarea>
+    <div id="gratitude-saved" style="font-size:.7rem;color:var(--success);margin-top:4px;opacity:0;transition:opacity .3s">✓ Saved</div>
   </div>
 
   <!-- Book reading -->
@@ -354,11 +356,23 @@
     }
   }
 
+  let gratitudeTimer;
+  function saveGratitude(val) {
+    clearTimeout(gratitudeTimer);
+    gratitudeTimer = setTimeout(() => {
+      Store.setGratitude(TODAY, val);
+      const el = document.getElementById('gratitude-saved');
+      el.style.opacity = '1';
+      setTimeout(() => el.style.opacity = '0', 1800);
+    }, 600);
+  }
+
   function pickMood(btn) {
     const mood = btn.dataset.mood;
     const current = Store.getDay(TODAY).mood || '';
-    Store.setMood(TODAY, current === mood ? '' : mood);
-    document.querySelectorAll('.mood-btn').forEach(b => b.classList.toggle('active', b.dataset.mood === (current === mood ? '' : mood)));
+    const newMood = current === mood ? '' : mood;
+    Store.setMood(TODAY, newMood);
+    document.querySelectorAll('.mood-btn').forEach(b => b.classList.toggle('active', b.dataset.mood === newMood));
   }
 
   function renderBookSummary() {

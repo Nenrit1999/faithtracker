@@ -5,6 +5,105 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Faith & Flow — Bible</title>
   <link rel="stylesheet" href="../css/style.css" />
+  <style>
+    /* ── Bible reader ── */
+    .bible-tabs { display:flex; gap:8px; margin-bottom:20px; }
+    .btab {
+      flex:1; padding:9px 14px; border-radius:12px; border:1.5px solid var(--border);
+      font-family:var(--sans); font-size:.84rem; font-weight:500; cursor:pointer;
+      background:var(--white); color:var(--mauve); transition:all .18s;
+    }
+    .btab.active {
+      background:linear-gradient(135deg,var(--lavender2),var(--petal));
+      color:var(--plum); border-color:var(--lavender); box-shadow:0 2px 12px rgba(196,168,224,.3);
+    }
+    /* reader panel */
+    .reader-wrap { background:var(--white); border:1px solid var(--border); border-radius:22px; overflow:hidden; }
+    .reader-toolbar {
+      display:flex; align-items:center; gap:10px; padding:14px 18px;
+      border-bottom:1px solid var(--border); flex-wrap:wrap;
+    }
+    .reader-toolbar select {
+      border:1.5px solid var(--border); border-radius:10px; padding:6px 10px;
+      font-family:var(--sans); font-size:.84rem; color:var(--ink);
+      background:var(--blush); outline:none; cursor:pointer;
+      transition:border-color .2s;
+    }
+    .reader-toolbar select:focus { border-color:var(--lavender); }
+    .btn-nav {
+      background:var(--blush); border:1.5px solid var(--border); border-radius:8px;
+      padding:6px 12px; font-size:.82rem; color:var(--mauve); cursor:pointer;
+      transition:all .15s; font-family:var(--sans);
+    }
+    .btn-nav:hover { border-color:var(--lavender); color:var(--plum); }
+    .btn-nav:disabled { opacity:.4; cursor:not-allowed; }
+    .btn-mark-read {
+      margin-left:auto; background:linear-gradient(135deg,var(--lavender),var(--rose));
+      border:none; border-radius:10px; padding:7px 16px;
+      font-family:var(--sans); font-size:.82rem; font-weight:600;
+      color:white; cursor:pointer; transition:all .2s;
+      box-shadow:0 2px 10px rgba(196,168,224,.35);
+    }
+    .btn-mark-read:hover { box-shadow:0 4px 16px rgba(196,168,224,.5); transform:translateY(-1px); }
+    .btn-mark-read.done-read {
+      background:linear-gradient(135deg,var(--success),#5aad8a);
+    }
+    .reader-body { padding:24px 28px 20px; }
+    .reader-chapter-title {
+      font-family:var(--serif); font-size:1.35rem; color:var(--plum);
+      margin-bottom:18px; font-style:italic;
+    }
+    .reader-loading { text-align:center; padding:40px; color:var(--muted); font-size:.9rem; }
+    .reader-error { text-align:center; padding:30px; color:var(--rose); font-size:.85rem; }
+    .verse-line {
+      display:flex; gap:10px; margin-bottom:8px; line-height:1.75;
+    }
+    .verse-num {
+      font-size:.68rem; font-weight:700; color:var(--lavender);
+      min-width:22px; padding-top:3px; user-select:none; flex-shrink:0;
+    }
+    .verse-txt { font-size:.95rem; color:var(--ink); }
+
+    /* ── Reflection section inside reader ── */
+    .reflection-section {
+      margin-top:28px; border-top:1px solid var(--border); padding-top:20px;
+    }
+    .reflection-section h4 {
+      font-family:var(--serif); font-size:1rem; color:var(--plum); margin-bottom:12px;
+    }
+    .reflection-entry {
+      background:var(--blush2); border:1px solid var(--border); border-radius:14px;
+      padding:14px 16px; margin-bottom:10px; position:relative;
+    }
+    .reflection-entry-text { font-size:.875rem; color:var(--ink); line-height:1.6; white-space:pre-wrap; }
+    .reflection-entry-date { font-size:.68rem; color:var(--muted); margin-top:6px; }
+    .btn-delete-ref {
+      position:absolute; top:10px; right:12px; background:none; border:none;
+      color:var(--muted); cursor:pointer; font-size:.8rem; padding:2px 6px;
+      border-radius:6px; transition:color .15s, background .15s;
+    }
+    .btn-delete-ref:hover { color:var(--rose); background:var(--petal2); }
+    .new-reflection {
+      margin-top:8px;
+    }
+    .new-reflection textarea {
+      width:100%; border:1.5px solid var(--border); border-radius:12px;
+      padding:10px 14px; font-family:var(--sans); font-size:.875rem;
+      color:var(--ink); background:var(--blush); resize:vertical;
+      min-height:80px; outline:none; line-height:1.6;
+      transition:border-color .2s, box-shadow .2s;
+    }
+    .new-reflection textarea:focus { border-color:var(--lavender); box-shadow:0 0 0 3px rgba(196,168,224,.12); background:var(--white); }
+    .new-reflection textarea::placeholder { color:var(--muted); }
+    .new-reflection-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:8px; }
+    .btn-save-ref {
+      background:linear-gradient(135deg,var(--plum),var(--plum2)); border:none;
+      border-radius:9px; padding:7px 18px; font-family:var(--sans); font-size:.82rem;
+      font-weight:600; color:white; cursor:pointer; transition:all .18s;
+      box-shadow:0 3px 12px rgba(61,31,78,.2);
+    }
+    .btn-save-ref:hover { box-shadow:0 5px 18px rgba(61,31,78,.3); transform:translateY(-1px); }
+  </style>
 </head>
 <body>
 
@@ -16,6 +115,7 @@
     <li><a href="dashboard.html">Today</a></li>
     <li><a href="bible.html" class="active">Bible</a></li>
     <li><a href="books.html">Books</a></li>
+    <li><a href="journal.html">Journal</a></li>
   </ul></nav>
   <div class="header-right">
     <span class="user-name" id="user-name"></span>
@@ -29,21 +129,34 @@
     <p class="progress-info" id="progress-text"></p>
     <div class="prog-bar"><div class="prog-fill" id="global-bar" style="width:0%"></div></div>
   </div>
-  <div id="bible-root"></div>
-</main>
 
-<!-- Reflection modal -->
-<div class="modal-overlay" id="modal" onclick="closeModal(event)">
-  <div class="modal">
-    <h3 id="modal-title">Reflection</h3>
-    <p class="modal-sub" id="modal-sub"></p>
-    <textarea id="modal-text" placeholder="What stood out to you in this chapter? Any thoughts, questions, or verses that hit different…"></textarea>
-    <div class="modal-actions">
-      <button class="btn-ghost" onclick="closeModalDirect()">Close</button>
-      <button class="btn-save" onclick="saveReflection()">Save reflection</button>
+  <!-- View tabs -->
+  <div class="bible-tabs">
+    <button class="btab active" id="tab-tracker" onclick="switchTab('tracker')">📖 Chapter Tracker</button>
+    <button class="btab" id="tab-reader" onclick="switchTab('reader')">✨ Read the Bible</button>
+  </div>
+
+  <!-- Tracker view -->
+  <div id="view-tracker">
+    <div id="bible-root"></div>
+  </div>
+
+  <!-- Reader view -->
+  <div id="view-reader" style="display:none">
+    <div class="reader-wrap">
+      <div class="reader-toolbar">
+        <select id="sel-book" onchange="onBookChange()"></select>
+        <select id="sel-chapter" onchange="loadChapter()"></select>
+        <button class="btn-nav" id="btn-prev" onclick="navChapter(-1)">← Prev</button>
+        <button class="btn-nav" id="btn-next" onclick="navChapter(1)">Next →</button>
+        <button class="btn-mark-read" id="btn-mark-read" onclick="markCurrentRead()">Mark as read ✓</button>
+      </div>
+      <div class="reader-body">
+        <div id="reader-content"><div class="reader-loading">Select a book and chapter to begin reading 🌸</div></div>
+      </div>
     </div>
   </div>
-</div>
+</main>
 
 <script src="../js/auth.js"></script>
 <script src="../js/store.js"></script>
@@ -88,8 +201,16 @@
     draw();
   })();
 
-  let activeBook = null, activeChapter = null;
+  // ── Tab switching ─────────────────────────────────
+  function switchTab(tab) {
+    document.getElementById('view-tracker').style.display = tab === 'tracker' ? '' : 'none';
+    document.getElementById('view-reader').style.display  = tab === 'reader'  ? '' : 'none';
+    document.getElementById('tab-tracker').classList.toggle('active', tab === 'tracker');
+    document.getElementById('tab-reader').classList.toggle('active',  tab === 'reader');
+    if (tab === 'reader' && !readerInitialized) initReader();
+  }
 
+  // ── Global progress ───────────────────────────────
   function refreshGlobal() {
     const read = Store.totalChaptersRead();
     const pct  = ((read / TOTAL_CHAPTERS) * 100).toFixed(1);
@@ -98,6 +219,7 @@
     document.getElementById('global-bar').style.width = pct + '%';
   }
 
+  // ── Tracker view ──────────────────────────────────
   function renderBook(book) {
     const total = book.chapters; let readCount = 0;
     for (let c = 1; c <= total; c++) if (Store.isChapterRead(book.name, c)) readCount++;
@@ -116,14 +238,15 @@
           ${Array.from({length: total}, (_,i) => {
             const c = i + 1;
             const read = Store.isChapterRead(book.name, c);
-            const hasNote = Store.getReflection(book.name, c).trim().length > 0;
+            const refs = Store.getReflections(book.name, c);
+            const hasNote = refs.length > 0;
             return `<button class="ch-btn${read?' read':''}${hasNote?' has-note':''}"
               onclick="toggleChapter('${book.name}',${c},this)"
-              oncontextmenu="openReflection('${book.name}',${c});return false"
-              title="${read?'Read':'Not read'}${hasNote?' · has reflection':''}">${c}</button>`;
+              title="${read?'Read':'Unread'}${hasNote?' · '+refs.length+' reflection(s)':''} · Click to toggle, right-click to open in reader"
+              oncontextmenu="openInReader('${book.name}',${c});return false">${c}</button>`;
           }).join('')}
           <div style="width:100%;padding-top:4px">
-            <p class="weekly-note">Right-click a chapter to write a reflection · gold dot = has reflection</p>
+            <p class="weekly-note">Click to mark read/unread · Right-click to open in reader ✨</p>
           </div>
         </div>
       </div>`;
@@ -151,9 +274,10 @@
   function toggleChapter(book, chapter, btn) {
     const nowRead = Store.toggleChapter(book, chapter);
     btn.classList.toggle('read', nowRead);
-    const note = Store.getReflection(book, chapter).trim().length > 0;
-    btn.classList.toggle('has-note', note);
-    btn.title = (nowRead ? 'Read' : 'Not read') + (note ? ' · has reflection' : '');
+    const refs = Store.getReflections(book, chapter);
+    const hasNote = refs.length > 0;
+    btn.classList.toggle('has-note', hasNote);
+    btn.title = (nowRead ? 'Read' : 'Unread') + (hasNote ? ` · ${refs.length} reflection(s)` : '') + ' · Right-click to open in reader';
     btn.style.transform = 'scale(1.35)';
     setTimeout(() => btn.style.transform = '', 220);
 
@@ -168,32 +292,187 @@
     refreshGlobal();
   }
 
-  function openReflection(book, chapter) {
-    activeBook = book; activeChapter = chapter;
-    document.getElementById('modal-title').textContent = `${book} — Chapter ${chapter}`;
-    document.getElementById('modal-sub').textContent = 'Your reflection on this chapter';
-    document.getElementById('modal-text').value = Store.getReflection(book, chapter);
-    document.getElementById('modal').classList.add('show');
-    setTimeout(() => document.getElementById('modal-text').focus(), 80);
+  function openInReader(bookName, chapter) {
+    switchTab('reader');
+    if (!readerInitialized) initReader();
+    const sel = document.getElementById('sel-book');
+    sel.value = bookName;
+    onBookChange(chapter);
   }
 
-  function closeModal(e) {
-    if (e.target === document.getElementById('modal')) closeModalDirect();
-  }
-  function closeModalDirect() { document.getElementById('modal').classList.remove('show'); }
+  // ── Bible Reader ──────────────────────────────────
+  let readerInitialized = false;
+  let currentBook = null;
+  let currentChapter = 1;
+  let loadingChapter = false;
 
-  function saveReflection() {
-    Store.saveReflection(activeBook, activeChapter, document.getElementById('modal-text').value);
-    closeModalDirect();
-    const note = document.getElementById('modal-text').value.trim().length > 0;
-    const btn = document.querySelector(`[onclick="toggleChapter('${activeBook}',${activeChapter},this)"]`);
-    if (btn) {
-      btn.classList.toggle('has-note', note);
-      btn.title = (Store.isChapterRead(activeBook, activeChapter) ? 'Read' : 'Not read') + (note ? ' · has reflection' : '');
+  function initReader() {
+    readerInitialized = true;
+    const sel = document.getElementById('sel-book');
+    BIBLE_BOOKS.forEach(b => {
+      const opt = document.createElement('option');
+      opt.value = b.name; opt.textContent = b.name;
+      sel.appendChild(opt);
+    });
+    currentBook = BIBLE_BOOKS[0].name;
+    sel.value = currentBook;
+    populateChapters();
+    loadChapter();
+  }
+
+  function populateChapters(targetChapter) {
+    const book = BIBLE_BOOKS.find(b => b.name === currentBook);
+    const sel = document.getElementById('sel-chapter');
+    sel.innerHTML = '';
+    for (let i = 1; i <= book.chapters; i++) {
+      const opt = document.createElement('option');
+      opt.value = i; opt.textContent = `Chapter ${i}`;
+      sel.appendChild(opt);
+    }
+    currentChapter = targetChapter || 1;
+    sel.value = currentChapter;
+  }
+
+  function onBookChange(targetChapter) {
+    currentBook = document.getElementById('sel-book').value;
+    populateChapters(targetChapter);
+    loadChapter();
+  }
+
+  function updateNavButtons() {
+    const book = BIBLE_BOOKS.find(b => b.name === currentBook);
+    document.getElementById('btn-prev').disabled = currentChapter <= 1;
+    document.getElementById('btn-next').disabled = currentChapter >= book.chapters;
+  }
+
+  function navChapter(dir) {
+    const book = BIBLE_BOOKS.find(b => b.name === currentBook);
+    const next = currentChapter + dir;
+    if (next < 1 || next > book.chapters) return;
+    currentChapter = next;
+    document.getElementById('sel-chapter').value = currentChapter;
+    loadChapter();
+  }
+
+  async function loadChapter() {
+    if (loadingChapter) return;
+    currentBook = document.getElementById('sel-book').value;
+    currentChapter = parseInt(document.getElementById('sel-chapter').value);
+    updateMarkReadButton();
+    updateNavButtons();
+
+    const content = document.getElementById('reader-content');
+    content.innerHTML = '<div class="reader-loading">Loading… 🌸</div>';
+    loadingChapter = true;
+
+    try {
+      // bible-api.com provides KJV free; for NLT-style wording we use their "web" (World English Bible)
+      // which is modern, free, and copyright-free — closest freely available to NLT in style
+      const bookSlug = currentBook.toLowerCase().replace(/\s+/g, '+');
+      const url = `https://bible-api.com/${encodeURIComponent(currentBook)}+${currentChapter}?translation=web`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('Network response not ok');
+      const data = await res.json();
+
+      renderChapterContent(data.verses || []);
+    } catch(e) {
+      content.innerHTML = `<div class="reader-error">
+        Couldn't load this chapter right now — please check your internet connection and try again.<br><br>
+        <button class="btn-nav" onclick="loadChapter()">Retry</button>
+      </div>`;
+    } finally {
+      loadingChapter = false;
     }
   }
 
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModalDirect(); });
+  function renderChapterContent(verses) {
+    const isRead = Store.isChapterRead(currentBook, currentChapter);
+    const refs = Store.getReflections(currentBook, currentChapter);
+
+    const versesHtml = verses.map(v =>
+      `<div class="verse-line">
+        <span class="verse-num">${v.verse}</span>
+        <span class="verse-txt">${v.text.trim()}</span>
+      </div>`
+    ).join('');
+
+    const refsHtml = refs.length ? refs.map((r, i) => `
+      <div class="reflection-entry" id="ref-entry-${i}">
+        <div class="reflection-entry-text">${escHtml(r.text)}</div>
+        <div class="reflection-entry-date">${new Date(r.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</div>
+        <button class="btn-delete-ref" onclick="deleteReflection(${i})" title="Delete this reflection">✕</button>
+      </div>`) .join('') : '<p style="font-size:.8rem;color:var(--muted);font-style:italic">No reflections yet for this chapter.</p>';
+
+    document.getElementById('reader-content').innerHTML = `
+      <div class="reader-chapter-title">${currentBook} — Chapter ${currentChapter}</div>
+      ${versesHtml}
+      <div class="reflection-section">
+        <h4>📝 My Reflections</h4>
+        <div id="refs-list">${refsHtml}</div>
+        <div class="new-reflection">
+          <textarea id="new-ref-input" placeholder="What stood out to you in this chapter? Any thoughts, questions, or verses that hit different…"></textarea>
+          <div class="new-reflection-actions">
+            <button class="btn-save-ref" onclick="saveNewReflection()">Save reflection 💜</button>
+          </div>
+        </div>
+      </div>`;
+
+    updateMarkReadButton();
+  }
+
+  function escHtml(t) {
+    return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function updateMarkReadButton() {
+    const btn = document.getElementById('btn-mark-read');
+    if (!btn) return;
+    const isRead = Store.isChapterRead(currentBook, currentChapter);
+    btn.textContent = isRead ? '✓ Read' : 'Mark as read ✓';
+    btn.classList.toggle('done-read', isRead);
+  }
+
+  function markCurrentRead() {
+    const wasRead = Store.isChapterRead(currentBook, currentChapter);
+    Store.toggleChapter(currentBook, currentChapter);
+    if (!wasRead) Store.saveDay(Store.todayKey(), { bibleChapter: true });
+    updateMarkReadButton();
+    refreshGlobal();
+    // update tracker button if visible
+    const btn = document.querySelector(`#acc-${currentBook.replace(/\s/g,'_')} .chapter-grid .ch-btn:nth-child(${currentChapter})`);
+    if (btn) btn.classList.toggle('read', !wasRead);
+  }
+
+  function saveNewReflection() {
+    const inp = document.getElementById('new-ref-input');
+    const text = inp.value.trim();
+    if (!text) return;
+    Store.addReflection(currentBook, currentChapter, text);
+    inp.value = '';
+    // re-render reflection list
+    const refs = Store.getReflections(currentBook, currentChapter);
+    const refsHtml = refs.map((r, i) => `
+      <div class="reflection-entry">
+        <div class="reflection-entry-text">${escHtml(r.text)}</div>
+        <div class="reflection-entry-date">${new Date(r.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</div>
+        <button class="btn-delete-ref" onclick="deleteReflection(${i})" title="Delete">✕</button>
+      </div>`).join('');
+    document.getElementById('refs-list').innerHTML = refsHtml;
+  }
+
+  function deleteReflection(i) {
+    if (!confirm('Delete this reflection?')) return;
+    Store.deleteReflection(currentBook, currentChapter, i);
+    const refs = Store.getReflections(currentBook, currentChapter);
+    const refsHtml = refs.length ? refs.map((r, idx) => `
+      <div class="reflection-entry">
+        <div class="reflection-entry-text">${escHtml(r.text)}</div>
+        <div class="reflection-entry-date">${new Date(r.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</div>
+        <button class="btn-delete-ref" onclick="deleteReflection(${idx})" title="Delete">✕</button>
+      </div>`).join('')
+    : '<p style="font-size:.8rem;color:var(--muted);font-style:italic">No reflections yet.</p>';
+    document.getElementById('refs-list').innerHTML = refsHtml;
+  }
 
   buildBible();
 </script>

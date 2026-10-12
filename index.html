@@ -34,7 +34,23 @@
         <input type="password" id="login-password" placeholder="Your password" required />
       </div>
       <button type="submit" class="btn-primary">Sign in</button>
+      <button type="button" style="width:100%;margin-top:8px;background:none;border:none;color:var(--mauve);font-size:.82rem;cursor:pointer;padding:6px;font-family:var(--sans)" onclick="showTab('forgot')">Forgot password?</button>
     </form>
+
+    <!-- Forgot password form -->
+    <div id="forgot-form" style="display:none">
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:14px;line-height:1.55">Enter your email and new password below. This works as long as you're on the same device — your account is stored locally.</p>
+      <div class="form-field">
+        <label for="forgot-email">Email</label>
+        <input type="email" id="forgot-email" placeholder="you@example.com" required />
+      </div>
+      <div class="form-field">
+        <label for="forgot-new-pass">New password</label>
+        <input type="password" id="forgot-new-pass" placeholder="At least 6 characters" minlength="6" required />
+      </div>
+      <button type="button" class="btn-primary" onclick="doReset()">Reset password</button>
+      <button type="button" style="width:100%;margin-top:8px;background:none;border:none;color:var(--mauve);font-size:.83rem;cursor:pointer;padding:6px;font-family:var(--sans)" onclick="showTab('login')">← Back to sign in</button>
+    </div>
 
     <!-- Register form -->
     <form id="register-form" style="display:none" onsubmit="doRegister(event)">
@@ -103,7 +119,25 @@
     });
     document.getElementById('login-form').style.display    = tab === 'login'    ? '' : 'none';
     document.getElementById('register-form').style.display = tab === 'register' ? '' : 'none';
+    document.getElementById('forgot-form').style.display   = tab === 'forgot'   ? '' : 'none';
     document.getElementById('auth-error').classList.remove('show');
+  }
+
+  function doReset(e) {
+    const email = document.getElementById('forgot-email').value.trim().toLowerCase();
+    const newPass = document.getElementById('forgot-new-pass').value;
+    if (!email || newPass.length < 6) { showError('Please fill in all fields (password min 6 chars).'); return; }
+    const res = Auth.resetPassword(email, newPass);
+    if (res.ok) {
+      showError('');
+      document.getElementById('auth-error').style.background = '#D8F3E8';
+      document.getElementById('auth-error').style.color = '#2A7A52';
+      document.getElementById('auth-error').textContent = 'Password reset! You can now sign in.';
+      document.getElementById('auth-error').classList.add('show');
+      setTimeout(() => showTab('login'), 2000);
+    } else {
+      showError(res.error);
+    }
   }
 
   function showError(msg) {
