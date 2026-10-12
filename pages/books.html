@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Faith & Flow — Books</title>
+  <link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+
+<canvas id="petal-canvas"></canvas>
+
+<header class="app-header">
+  <a href="dashboard.html" class="logo"><span class="logo-bloom">🌸</span> Faith &amp; Flow</a>
+  <nav><ul class="nav-links">
+    <li><a href="dashboard.html">Today</a></li>
+    <li><a href="bible.html">Bible</a></li>
+    <li><a href="books.html" class="active">Books</a></li>
+  </ul></nav>
+  <div class="header-right">
+    <span class="user-name" id="user-name"></span>
+    <button class="btn-logout" onclick="Auth.logout()">Sign out</button>
+  </div>
+</header>
+
+<main class="page-wrap">
+  <div style="margin-bottom:22px">
+    <h1 style="color:var(--plum);font-size:1.7rem">Book reading</h1>
+    <p style="font-size:.875rem;color:var(--muted);margin-top:4px">3 chapters per week · one book at a time</p>
+  </div>
+
+  <div class="books-wrap">
+    <div class="add-book-form">
+      <input type="text" id="new-book-title" placeholder="Book title…" maxlength="120"
+        onkeydown="if(event.key==='Enter')addBook()" />
+      <button class="btn-add" onclick="addBook()">+ Add book</button>
+    </div>
+
+    <div id="books-list"></div>
+    <div id="books-empty" style="display:none" class="empty-state">
+      <span class="e-emoji">📖</span>
+      <p>No books yet. Add the first one above!</p>
+    </div>
+  </div>
+</main>
+
+<script src="../js/auth.js"></script>
+<script src="../js/store.js"></script>
+<script>
+  if (!Auth.requireAuth()) throw '';
+  document.getElementById('user-name').textContent = Auth.currentUser().name;
+
+  // ── Floating petals ───────────────────────────────
+  (function(){
+    const canvas = document.getElementById('petal-canvas');
+    const ctx = canvas.getContext('2d');
+    const petals = [];
+    const EMOJIS = ['🌸','🌺','✿','❀','🌷','✦','⋆'];
+    function resize(){ canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+    window.addEventListener('resize', resize); resize();
+    for (let i = 0; i < 18; i++) {
+      petals.push({
+        x: Math.random()*window.innerWidth, y: Math.random()*window.innerHeight,
+        size: 10+Math.random()*12, speedY: .18+Math.random()*.4,
+        speedX: (Math.random()-.5)*.22, rot: Math.random()*Math.PI*2,
+        rotSpeed: (Math.random()-.5)*.013, opacity: .1+Math.random()*.2,
+        emoji: EMOJIS[Math.floor(Math.random()*EMOJIS.length)],
+        wobble: Math.random()*Math.PI*2, wobbleSpeed: .01+Math.random()*.018,
+      });
+    }
+    function draw(){
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      petals.forEach(p=>{
+        ctx.save(); ctx.globalAlpha=p.opacity;
+        ctx.translate(p.x,p.y); ctx.rotate(p.rot);
+        ctx.font=`${p.size}px serif`; ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText(p.emoji,0,0); ctx.restore();
+        p.y+=p.speedY; p.x+=p.speedX+Math.sin(p.wobble)*.22;
+        p.rot+=p.rotSpeed; p.wobble+=p.wobbleSpeed;
+        if(p.y>canvas.height+20){ p.y=-20; p.x=Math.random()*canvas.width; }
+        if(p.x<-20) p.x=canvas.width+20;
+        if(p.x>canvas.width+20) p.x=-20;
+      });
+      requestAnimationFrame(draw);
+    }
+    draw();
+  })();
+
+  // ── Confetti ──────────────────────────────────────
+  function confettiBurst() {
+    const colors = ['#C4A8E0','#E8829A','#F0D6E8','#D4A853','#7BBEA0'];
+    for (let i = 0; i < 18; i++) {
+      const p = document.createElement('div');
+      p.className = 'confetti-piece';
+      p.style.cssText = `left:${20+Math.random()*60}%;top:30%;width:${6+Math.random()*6}px;height:${6+Math.random()*10}px;background:${colors[Math.floor(Math.random()*5)]};animation-delay:${Math.random()*.4}s;animation-duration:${1+Math.random()*.6}s`;
+      document.body.appendChild(p);
+      p.addEventListener('animationend', () => p.remove());
+    }
+  }
+
+  function addBook() {
+    const input = document.getElementById('new-book-title');
+    const title = input.value.trim();
+    if (!title) return;
+    Store.addBook(title);
+    input.value = '';
+    renderBooks();
+  }
+
+  function increment(id) {
+    const book = Store.getBooks().find(b => b.id === id);
+    if (!book || book.done) return;
+    Store.updateBook(id, { chaptersRead: book.chaptersRead + 1 });
+    renderBooks();
+  }
+
+  function decrement(id) {
+    const book = Store.getBooks().find(b => b.id === id);
+    if (!book || book.done || book.chaptersRead === 0) return;
+    Store.updateBook(id, { chaptersRead: book.chaptersRead - 1 });
+    renderBooks();
+  }
+
+  function markDone(id) {
+    if (!confirm('Mark this book as finished? 🎉')) return;
+    Store.markBookDone(id);
+    confettiBurst();
+    renderBooks();
+  }
+
+  function renderBooks() {
+    const books = Store.getBooks();
+    const list  = document.getElementById('books-list');
+    const empty = document.getElementById('books-empty');
+
+    if (!books.length) {
+      list.innerHTML = '';
+      empty.style.display = 'block';
+      return;
+    }
+    empty.style.display = 'none';
+
+    const sorted = [...books].sort((a, b) => {
+      if (a.done !== b.done) return a.done ? 1 : -1;
+      return b.addedAt - a.addedAt;
+    });
+
+    list.innerHTML = sorted.map(book => {
+      const wc   = book.chaptersRead % 3;
+      const wpct = Math.min(100, (wc / 3) * 100);
+      return `
+        <div class="book-card${book.done?' completed':''}">
+          <div class="book-card-top">
+            <div class="book-card-title">${book.title}</div>
+            ${book.done ? '<span class="badge-done">✓ Finished</span>' : ''}
+          </div>
+          <div class="chapters-row">
+            <div class="mini-bar-book"><div class="mini-fill-book" style="width:${wpct}%"></div></div>
+            <span class="chapters-label">${wc}/3 this week · ${book.chaptersRead} total</span>
+          </div>
+          ${!book.done ? `
+          <div class="chapter-controls">
+            <button class="btn-sm" onclick="decrement(${book.id})">− chapter</button>
+            <button class="btn-sm" onclick="increment(${book.id})">+ chapter</button>
+            <button class="btn-sm done-btn" onclick="markDone(${book.id})">Mark as finished</button>
+          </div>
+          <p class="weekly-note">Goal: 3 chapters a week · started ${new Date(book.addedAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</p>
+          ` : `
+          <p class="weekly-note" style="margin-top:8px">Completed ${new Date(book.completedAt||book.addedAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})} · ${book.chaptersRead} chapters total</p>`}
+        </div>`;
+    }).join('');
+  }
+
+  renderBooks();
+</script>
+</body>
+</html>

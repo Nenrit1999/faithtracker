@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Faith & Flow — Bible</title>
+  <link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+
+<canvas id="petal-canvas"></canvas>
+
+<header class="app-header">
+  <a href="dashboard.html" class="logo"><span class="logo-bloom">🌸</span> Faith &amp; Flow</a>
+  <nav><ul class="nav-links">
+    <li><a href="dashboard.html">Today</a></li>
+    <li><a href="bible.html" class="active">Bible</a></li>
+    <li><a href="books.html">Books</a></li>
+  </ul></nav>
+  <div class="header-right">
+    <span class="user-name" id="user-name"></span>
+    <button class="btn-logout" onclick="Auth.logout()">Sign out</button>
+  </div>
+</header>
+
+<main class="page-wrap">
+  <div class="bible-hero">
+    <h1>The whole Bible</h1>
+    <p class="progress-info" id="progress-text"></p>
+    <div class="prog-bar"><div class="prog-fill" id="global-bar" style="width:0%"></div></div>
+  </div>
+  <div id="bible-root"></div>
+</main>
+
+<!-- Reflection modal -->
+<div class="modal-overlay" id="modal" onclick="closeModal(event)">
+  <div class="modal">
+    <h3 id="modal-title">Reflection</h3>
+    <p class="modal-sub" id="modal-sub"></p>
+    <textarea id="modal-text" placeholder="What stood out to you in this chapter? Any thoughts, questions, or verses that hit different…"></textarea>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModalDirect()">Close</button>
+      <button class="btn-save" onclick="saveReflection()">Save reflection</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/auth.js"></script>
+<script src="../js/store.js"></script>
+<script src="../js/bible.js"></script>
+<script>
+  if (!Auth.requireAuth()) throw '';
+  document.getElementById('user-name').textContent = Auth.currentUser().name;
+
+  // ── Floating petals ───────────────────────────────
+  (function(){
+    const canvas = document.getElementById('petal-canvas');
+    const ctx = canvas.getContext('2d');
+    const petals = [];
+    const EMOJIS = ['🌸','🌺','✿','❀','🌷','✦','⋆'];
+    function resize(){ canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+    window.addEventListener('resize', resize); resize();
+    for (let i = 0; i < 18; i++) {
+      petals.push({
+        x: Math.random()*window.innerWidth, y: Math.random()*window.innerHeight,
+        size: 10+Math.random()*12, speedY: .18+Math.random()*.4,
+        speedX: (Math.random()-.5)*.22, rot: Math.random()*Math.PI*2,
+        rotSpeed: (Math.random()-.5)*.013, opacity: .1+Math.random()*.2,
+        emoji: EMOJIS[Math.floor(Math.random()*EMOJIS.length)],
+        wobble: Math.random()*Math.PI*2, wobbleSpeed: .01+Math.random()*.018,
+      });
+    }
+    function draw(){
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      petals.forEach(p=>{
+        ctx.save(); ctx.globalAlpha=p.opacity;
+        ctx.translate(p.x,p.y); ctx.rotate(p.rot);
+        ctx.font=`${p.size}px serif`; ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText(p.emoji,0,0); ctx.restore();
+        p.y+=p.speedY; p.x+=p.speedX+Math.sin(p.wobble)*.22;
+        p.rot+=p.rotSpeed; p.wobble+=p.wobbleSpeed;
+        if(p.y>canvas.height+20){ p.y=-20; p.x=Math.random()*canvas.width; }
+        if(p.x<-20) p.x=canvas.width+20;
+        if(p.x>canvas.width+20) p.x=-20;
+      });
+      requestAnimationFrame(draw);
+    }
+    draw();
+  })();
+
+  let activeBook = null, activeChapter = null;
+
+  function refreshGlobal() {
+    const read = Store.totalChaptersRead();
+    const pct  = ((read / TOTAL_CHAPTERS) * 100).toFixed(1);
+    document.getElementById('progress-text').textContent =
+      `${read.toLocaleString()} of ${TOTAL_CHAPTERS.toLocaleString()} chapters read (${pct}%)`;
+    document.getElementById('global-bar').style.width = pct + '%';
+  }
+
+  function renderBook(book) {
+    const total = book.chapters; let readCount = 0;
+    for (let c = 1; c <= total; c++) if (Store.isChapterRead(book.name, c)) readCount++;
+    const pct = total > 0 ? (readCount / total) * 100 : 0;
+    const id = 'acc-' + book.name.replace(/\s/g,'_');
+    return `
+      <div class="book-accordion" id="${id}">
+        <div class="book-head" onclick="toggleAccordion(this)" role="button" tabindex="0"
+             onkeydown="if(event.key==='Enter'||event.key===' ')toggleAccordion(this)">
+          <span class="book-name">${book.name}</span>
+          <span class="book-progress" id="${id}-prog">${readCount}/${total}</span>
+          <div class="mini-bar"><div class="mini-fill" id="${id}-bar" style="width:${pct}%"></div></div>
+          <span class="chevron">▾</span>
+        </div>
+        <div class="chapter-grid" style="display:none">
+          ${Array.from({length: total}, (_,i) => {
+            const c = i + 1;
+            const read = Store.isChapterRead(book.name, c);
+            const hasNote = Store.getReflection(book.name, c).trim().length > 0;
+            return `<button class="ch-btn${read?' read':''}${hasNote?' has-note':''}"
+              onclick="toggleChapter('${book.name}',${c},this)"
+              oncontextmenu="openReflection('${book.name}',${c});return false"
+              title="${read?'Read':'Not read'}${hasNote?' · has reflection':''}">${c}</button>`;
+          }).join('')}
+          <div style="width:100%;padding-top:4px">
+            <p class="weekly-note">Right-click a chapter to write a reflection · gold dot = has reflection</p>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function buildBible() {
+    const root = document.getElementById('bible-root');
+    const ot = BIBLE_BOOKS.filter(b => b.testament === 'OT');
+    const nt = BIBLE_BOOKS.filter(b => b.testament === 'NT');
+    root.innerHTML = `
+      <div class="testament-label">Old Testament</div>
+      ${ot.map(renderBook).join('')}
+      <div class="testament-label">New Testament</div>
+      ${nt.map(renderBook).join('')}`;
+    refreshGlobal();
+  }
+
+  function toggleAccordion(head) {
+    const acc  = head.closest('.book-accordion');
+    const grid = acc.querySelector('.chapter-grid');
+    const open = acc.classList.toggle('open');
+    grid.style.display = open ? 'flex' : 'none';
+  }
+
+  function toggleChapter(book, chapter, btn) {
+    const nowRead = Store.toggleChapter(book, chapter);
+    btn.classList.toggle('read', nowRead);
+    const note = Store.getReflection(book, chapter).trim().length > 0;
+    btn.classList.toggle('has-note', note);
+    btn.title = (nowRead ? 'Read' : 'Not read') + (note ? ' · has reflection' : '');
+    btn.style.transform = 'scale(1.35)';
+    setTimeout(() => btn.style.transform = '', 220);
+
+    const bookData = BIBLE_BOOKS.find(b => b.name === book);
+    let readCount = 0;
+    for (let c = 1; c <= bookData.chapters; c++) if (Store.isChapterRead(book, c)) readCount++;
+    const id = 'acc-' + book.replace(/\s/g,'_');
+    document.getElementById(id+'-prog').textContent = `${readCount}/${bookData.chapters}`;
+    document.getElementById(id+'-bar').style.width = ((readCount/bookData.chapters)*100) + '%';
+
+    Store.saveDay(Store.todayKey(), { bibleChapter: true });
+    refreshGlobal();
+  }
+
+  function openReflection(book, chapter) {
+    activeBook = book; activeChapter = chapter;
+    document.getElementById('modal-title').textContent = `${book} — Chapter ${chapter}`;
+    document.getElementById('modal-sub').textContent = 'Your reflection on this chapter';
+    document.getElementById('modal-text').value = Store.getReflection(book, chapter);
+    document.getElementById('modal').classList.add('show');
+    setTimeout(() => document.getElementById('modal-text').focus(), 80);
+  }
+
+  function closeModal(e) {
+    if (e.target === document.getElementById('modal')) closeModalDirect();
+  }
+  function closeModalDirect() { document.getElementById('modal').classList.remove('show'); }
+
+  function saveReflection() {
+    Store.saveReflection(activeBook, activeChapter, document.getElementById('modal-text').value);
+    closeModalDirect();
+    const note = document.getElementById('modal-text').value.trim().length > 0;
+    const btn = document.querySelector(`[onclick="toggleChapter('${activeBook}',${activeChapter},this)"]`);
+    if (btn) {
+      btn.classList.toggle('has-note', note);
+      btn.title = (Store.isChapterRead(activeBook, activeChapter) ? 'Read' : 'Not read') + (note ? ' · has reflection' : '');
+    }
+  }
+
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModalDirect(); });
+
+  buildBible();
+</script>
+</body>
+</html>

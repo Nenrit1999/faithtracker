@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Faith & Flow — Today</title>
+  <link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+
+<canvas id="petal-canvas"></canvas>
+
+<header class="app-header">
+  <a href="dashboard.html" class="logo"><span class="logo-bloom">🌸</span> Faith &amp; Flow</a>
+  <nav><ul class="nav-links">
+    <li><a href="dashboard.html" class="active">Today</a></li>
+    <li><a href="bible.html">Bible</a></li>
+    <li><a href="books.html">Books</a></li>
+  </ul></nav>
+  <div class="header-right">
+    <span class="user-name" id="user-name"></span>
+    <button class="btn-logout" onclick="Auth.logout()">Sign out</button>
+  </div>
+</header>
+
+<main class="page-wrap">
+
+  <!-- Hero greeting -->
+  <div class="hero">
+    <div class="hero-sparkles" id="sparkle-container"></div>
+    <div class="hero-script" id="greeting-text"></div>
+    <div class="hero-date" id="date-text"></div>
+  </div>
+
+  <!-- Verse of the day -->
+  <div class="verse-card">
+    <div class="verse-tag">Verse of the day</div>
+    <div class="verse-text" id="verse-text"></div>
+    <div class="verse-ref" id="verse-ref"></div>
+  </div>
+
+  <!-- Week strip -->
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">This week</span>
+      <span class="panel-badge" id="week-badge">0 / 7 days</span>
+    </div>
+    <div class="week-strip" id="week-strip"></div>
+  </div>
+
+  <!-- Progress rings -->
+  <div class="rings-strip">
+    <div class="ring-tile">
+      <div class="ring-shimmer"></div>
+      <div class="ring-wrap">
+        <svg viewBox="0 0 66 66" width="66" height="66">
+          <circle cx="33" cy="33" r="28" fill="none" stroke="var(--border)" stroke-width="5"/>
+          <circle cx="33" cy="33" r="28" fill="none" stroke="url(#rg1)" stroke-width="5"
+            stroke-linecap="round" stroke-dasharray="175.9" id="ring-chapters-arc" stroke-dashoffset="175.9"/>
+          <defs><linearGradient id="rg1" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#C4A8E0"/><stop offset="100%" stop-color="#E8829A"/>
+          </linearGradient></defs>
+        </svg>
+        <div class="ring-val" id="ring-chapters-val">0</div>
+      </div>
+      <div class="ring-lbl">chapters read</div>
+    </div>
+    <div class="ring-tile">
+      <div class="ring-shimmer"></div>
+      <div class="ring-wrap">
+        <svg viewBox="0 0 66 66" width="66" height="66">
+          <circle cx="33" cy="33" r="28" fill="none" stroke="var(--border)" stroke-width="5"/>
+          <circle cx="33" cy="33" r="28" fill="none" stroke="url(#rg2)" stroke-width="5"
+            stroke-linecap="round" stroke-dasharray="175.9" id="ring-streak-arc" stroke-dashoffset="175.9"/>
+          <defs><linearGradient id="rg2" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#E4C070"/><stop offset="100%" stop-color="#E8829A"/>
+          </linearGradient></defs>
+        </svg>
+        <div class="ring-val" id="ring-streak-val">0</div>
+      </div>
+      <div class="ring-lbl">day streak 🔥</div>
+    </div>
+    <div class="ring-tile">
+      <div class="ring-shimmer"></div>
+      <div class="ring-wrap">
+        <svg viewBox="0 0 66 66" width="66" height="66">
+          <circle cx="33" cy="33" r="28" fill="none" stroke="var(--border)" stroke-width="5"/>
+          <circle cx="33" cy="33" r="28" fill="none" stroke="url(#rg3)" stroke-width="5"
+            stroke-linecap="round" stroke-dasharray="175.9" id="ring-pct-arc" stroke-dashoffset="175.9"/>
+          <defs><linearGradient id="rg3" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#7BBEA0"/><stop offset="100%" stop-color="#C4A8E0"/>
+          </linearGradient></defs>
+        </svg>
+        <div class="ring-val" id="ring-pct-val" style="font-size:.85rem">0%</div>
+      </div>
+      <div class="ring-lbl">Bible complete</div>
+    </div>
+  </div>
+
+  <!-- Daily rhythm -->
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">Today's rhythm</span>
+      <span class="panel-badge" id="tasks-badge">0 / 3</span>
+    </div>
+
+    <div class="task-row" id="row-bible">
+      <button class="tick" id="tick-bible" onclick="toggleBibleToday()" aria-label="Mark Bible chapter done">✓</button>
+      <div class="task-body">
+        <div class="task-label" id="label-bible">Read one Bible chapter</div>
+        <div class="task-sub"><a href="bible.html">Open Bible tracker →</a></div>
+      </div>
+    </div>
+
+    <div class="task-row" id="row-sermon">
+      <button class="tick" id="tick-sermon" onclick="toggleSermon()" aria-label="Mark sermon listened">✓</button>
+      <div class="task-body">
+        <div class="task-label" id="label-sermon">Listen to a sermon</div>
+        <input class="sermon-input" id="sermon-title" type="text" placeholder="Sermon title or speaker…"
+          oninput="Store.setSermonTitle(TODAY, this.value)" />
+      </div>
+    </div>
+
+    <div class="task-row" id="row-prayer">
+      <button class="tick" id="tick-prayer" onclick="togglePrayer()" aria-label="Mark prayer done">✓</button>
+      <div class="task-body">
+        <div class="task-label" id="label-prayer">15 minutes of prayer</div>
+        <div class="task-sub">Set aside quiet time with God</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mood + gratitude -->
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">How are you feeling?</span>
+    </div>
+    <div class="mood-row" id="mood-row">
+      <button class="mood-btn" data-mood="peaceful" onclick="pickMood(this)">☁️ Peaceful</button>
+      <button class="mood-btn" data-mood="grateful" onclick="pickMood(this)">🙏 Grateful</button>
+      <button class="mood-btn" data-mood="joyful" onclick="pickMood(this)">✨ Joyful</button>
+      <button class="mood-btn" data-mood="tired" onclick="pickMood(this)">🌙 Tired</button>
+      <button class="mood-btn" data-mood="struggling" onclick="pickMood(this)">💙 Struggling</button>
+    </div>
+    <textarea class="gratitude-input" id="gratitude-inp"
+      placeholder="What are you grateful for today? Or just write what's on your heart…"
+      rows="3" oninput="Store.setGratitude(TODAY, this.value)"></textarea>
+  </div>
+
+  <!-- Book reading -->
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">This week's reading</span>
+      <a href="books.html" style="font-size:.78rem;color:var(--lavender);text-decoration:none">Manage →</a>
+    </div>
+    <div id="book-summary"></div>
+  </div>
+
+</main>
+
+<script src="../js/auth.js"></script>
+<script src="../js/store.js"></script>
+<script>
+  if (!Auth.requireAuth()) throw '';
+  const user = Auth.currentUser();
+  const TODAY = Store.todayKey();
+  document.getElementById('user-name').textContent = user.name;
+
+  // ── Verses ────────────────────────────────────────
+  const VERSES = [
+    {text:"She is clothed with strength and dignity, and she laughs without fear of the future.", ref:"Proverbs 31:25"},
+    {text:"I can do all things through Christ who strengthens me.", ref:"Philippians 4:13"},
+    {text:"For I know the plans I have for you, declares the Lord, plans to prosper you and not to harm you.", ref:"Jeremiah 29:11"},
+    {text:"The Lord is my shepherd; I shall not want.", ref:"Psalm 23:1"},
+    {text:"Trust in the Lord with all your heart, and do not lean on your own understanding.", ref:"Proverbs 3:5"},
+    {text:"Be still, and know that I am God.", ref:"Psalm 46:10"},
+    {text:"Cast all your anxiety on him because he cares for you.", ref:"1 Peter 5:7"},
+    {text:"Your word is a lamp for my feet, a light on my path.", ref:"Psalm 119:105"},
+    {text:"She speaks with wisdom, and faithful instruction is on her tongue.", ref:"Proverbs 31:26"},
+    {text:"Come to me, all you who are weary and burdened, and I will give you rest.", ref:"Matthew 11:28"},
+    {text:"Delight yourself in the Lord, and he will give you the desires of your heart.", ref:"Psalm 37:4"},
+    {text:"The joy of the Lord is your strength.", ref:"Nehemiah 8:10"},
+    {text:"The grass withers and the flowers fall, but the word of our God endures forever.", ref:"Isaiah 40:8"},
+    {text:"Even the sparrow has found a home, and the swallow a nest for herself.", ref:"Psalm 84:3"},
+  ];
+  const v = VERSES[new Date().getDate() % VERSES.length];
+  document.getElementById('verse-text').textContent = `"${v.text}"`;
+  document.getElementById('verse-ref').textContent = `— ${v.ref}`;
+
+  // ── Greeting ──────────────────────────────────────
+  const h = new Date().getHours();
+  const greet = h < 5 ? 'Sweet dreams' : h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  const gEmoji = h < 5 ? '🌙' : h < 12 ? '🌸' : h < 17 ? '☀️' : '🌙';
+  document.getElementById('greeting-text').textContent = `${greet}, ${user.name} ${gEmoji}`;
+  document.getElementById('date-text').textContent = new Date().toLocaleDateString('en-GB',
+    { weekday:'long', day:'numeric', month:'long', year:'numeric' }).toUpperCase();
+
+  // ── Sparkles ──────────────────────────────────────
+  (function(){
+    const c = document.getElementById('sparkle-container');
+    const sparks = ['✦','⋆','✿','˚','⊹','✧'];
+    const colors = ['var(--rose)','var(--lavender)','var(--mauve)','var(--gold)'];
+    for (let i = 0; i < 12; i++) {
+      const el = document.createElement('span');
+      el.className = 'spark';
+      el.textContent = sparks[i % sparks.length];
+      el.style.cssText = `left:${5+Math.random()*90}%;top:${10+Math.random()*80}%;--dur:${2+Math.random()*3}s;--del:${Math.random()*3}s;color:${colors[Math.floor(Math.random()*4)]};font-size:${.6+Math.random()*.8}rem`;
+      c.appendChild(el);
+    }
+  })();
+
+  // ── Floating petals ───────────────────────────────
+  (function(){
+    const canvas = document.getElementById('petal-canvas');
+    const ctx = canvas.getContext('2d');
+    const petals = [];
+    const EMOJIS = ['🌸','🌺','✿','❀','🌷','✦','⋆'];
+    function resize(){ canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+    window.addEventListener('resize', resize); resize();
+    for (let i = 0; i < 20; i++) {
+      petals.push({
+        x: Math.random()*window.innerWidth, y: Math.random()*window.innerHeight,
+        size: 10+Math.random()*13, speedY: .2+Math.random()*.45,
+        speedX: (Math.random()-.5)*.25, rot: Math.random()*Math.PI*2,
+        rotSpeed: (Math.random()-.5)*.015, opacity: .12+Math.random()*.25,
+        emoji: EMOJIS[Math.floor(Math.random()*EMOJIS.length)],
+        wobble: Math.random()*Math.PI*2, wobbleSpeed: .01+Math.random()*.02,
+      });
+    }
+    function draw(){
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      petals.forEach(p=>{
+        ctx.save(); ctx.globalAlpha=p.opacity;
+        ctx.translate(p.x,p.y); ctx.rotate(p.rot);
+        ctx.font=`${p.size}px serif`; ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText(p.emoji,0,0); ctx.restore();
+        p.y+=p.speedY; p.x+=p.speedX+Math.sin(p.wobble)*.25;
+        p.rot+=p.rotSpeed; p.wobble+=p.wobbleSpeed;
+        if(p.y>canvas.height+20){ p.y=-20; p.x=Math.random()*canvas.width; }
+        if(p.x<-20) p.x=canvas.width+20;
+        if(p.x>canvas.width+20) p.x=-20;
+      });
+      requestAnimationFrame(draw);
+    }
+    draw();
+  })();
+
+  // ── Ring helper ───────────────────────────────────
+  function setRing(arcId, pct) {
+    const el = document.getElementById(arcId);
+    if (el) el.style.strokeDashoffset = 175.9 * (1 - Math.min(100, pct) / 100);
+  }
+
+  // ── Week strip ────────────────────────────────────
+  function renderWeekStrip() {
+    const strip = document.getElementById('week-strip');
+    const today = new Date(); const dow = today.getDay();
+    const monday = new Date(today); monday.setDate(today.getDate() - (dow === 0 ? 6 : dow - 1));
+    const names = ['M','T','W','T','F','S','S'];
+    let doneCt = 0;
+    const html = Array.from({length:7}, (_,i) => {
+      const d = new Date(monday); d.setDate(monday.getDate() + i);
+      const k = d.toISOString().slice(0,10);
+      const isToday = k === TODAY; const isFuture = d > today;
+      const day = Store.getDay(k);
+      const tasks = [day.bibleChapter, day.sermon, day.prayer].filter(Boolean).length;
+      const isDone = tasks === 3 && !isFuture; const isPartial = tasks > 0 && tasks < 3 && !isFuture;
+      if (isDone) doneCt++;
+      return `<div class="day-dot">
+        <div class="day-circle${isDone?' done':isPartial?' partial':isToday?' today':''}">
+          ${isDone?'✓':d.getDate()}
+        </div>
+        <div class="day-name">${names[i]}</div>
+      </div>`;
+    }).join('');
+    strip.innerHTML = html;
+    document.getElementById('week-badge').textContent = `${doneCt} / 7 days`;
+    document.getElementById('week-badge').classList.toggle('full', doneCt === 7);
+  }
+
+  // ── Confetti ──────────────────────────────────────
+  function confettiBurst() {
+    const colors = ['#C4A8E0','#E8829A','#F0D6E8','#D4A853','#7BBEA0'];
+    for (let i = 0; i < 18; i++) {
+      const p = document.createElement('div');
+      p.className = 'confetti-piece';
+      p.style.cssText = `left:${20+Math.random()*60}%;top:30%;width:${6+Math.random()*6}px;height:${6+Math.random()*10}px;background:${colors[Math.floor(Math.random()*5)]};animation-delay:${Math.random()*.4}s;animation-duration:${1+Math.random()*.6}s`;
+      document.body.appendChild(p);
+      p.addEventListener('animationend', () => p.remove());
+    }
+  }
+
+  // ── Render ────────────────────────────────────────
+  function refreshStats() {
+    const read = Store.totalChaptersRead();
+    document.getElementById('ring-chapters-val').textContent = read.toLocaleString();
+    setRing('ring-chapters-arc', (read / 1189) * 100);
+    const streak = Store.streakDays();
+    document.getElementById('ring-streak-val').textContent = streak;
+    setRing('ring-streak-arc', (streak / 30) * 100);
+    const pct = (read / 1189) * 100;
+    document.getElementById('ring-pct-val').textContent = pct.toFixed(1) + '%';
+    setRing('ring-pct-arc', pct);
+  }
+
+  function setTick(tickId, rowId, lblId, done) {
+    document.getElementById(tickId).classList.toggle('done', done);
+    document.getElementById(lblId).classList.toggle('done', done);
+    document.getElementById(rowId).classList.toggle('completed', done);
+  }
+
+  function bloomTick(id) {
+    const el = document.getElementById(id);
+    el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
+    el.addEventListener('animationend', () => el.classList.remove('pop'), { once: true });
+  }
+
+  function renderDay() {
+    const d = Store.getDay(TODAY);
+    setTick('tick-bible',  'row-bible',  'label-bible',  !!d.bibleChapter);
+    setTick('tick-sermon', 'row-sermon', 'label-sermon', !!d.sermon);
+    setTick('tick-prayer', 'row-prayer', 'label-prayer', !!d.prayer);
+    document.getElementById('sermon-title').value = d.sermonTitle || '';
+    document.getElementById('gratitude-inp').value = d.gratitude || '';
+    document.querySelectorAll('.mood-btn').forEach(b => b.classList.toggle('active', b.dataset.mood === (d.mood||'')));
+    const done = [d.bibleChapter, d.sermon, d.prayer].filter(Boolean).length;
+    document.getElementById('tasks-badge').textContent = `${done} / 3`;
+    document.getElementById('tasks-badge').classList.toggle('full', done === 3);
+    renderWeekStrip();
+    refreshStats();
+    renderBookSummary();
+  }
+
+  function toggleBibleToday() {
+    const d = Store.getDay(TODAY); const was = !!d.bibleChapter;
+    Store.saveDay(TODAY, { bibleChapter: !was }); bloomTick('tick-bible');
+    if (!was) checkAllDone(); renderDay();
+  }
+  function toggleSermon() {
+    const d = Store.getDay(TODAY); const was = !!d.sermon;
+    Store.toggleSermon(TODAY); bloomTick('tick-sermon');
+    if (!was) checkAllDone(); renderDay();
+  }
+  function togglePrayer() {
+    const d = Store.getDay(TODAY); const was = !!d.prayer;
+    Store.togglePrayer(TODAY); bloomTick('tick-prayer');
+    if (!was) checkAllDone(); renderDay();
+  }
+
+  function checkAllDone() {
+    const d = Store.getDay(TODAY);
+    if ([d.bibleChapter, d.sermon, d.prayer].filter(Boolean).length === 2) {
+      setTimeout(confettiBurst, 350);
+    }
+  }
+
+  function pickMood(btn) {
+    const mood = btn.dataset.mood;
+    const current = Store.getDay(TODAY).mood || '';
+    Store.setMood(TODAY, current === mood ? '' : mood);
+    document.querySelectorAll('.mood-btn').forEach(b => b.classList.toggle('active', b.dataset.mood === (current === mood ? '' : mood)));
+  }
+
+  function renderBookSummary() {
+    const books = Store.getBooks();
+    const active = books.find(b => !b.done);
+    const el = document.getElementById('book-summary');
+    if (!active) {
+      el.innerHTML = `<p style="font-size:.875rem;color:var(--muted)">No book added yet. <a href="books.html" style="color:var(--lavender)">Add one →</a></p>`;
+      return;
+    }
+    const wc = active.chaptersRead % 3;
+    el.innerHTML = `
+      <div class="book-summary-card">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
+          <div>
+            <div style="font-family:var(--serif);font-size:1.05rem;color:var(--plum);font-weight:600">${active.title}</div>
+            <div style="font-size:.75rem;color:var(--muted);margin-top:3px">${active.chaptersRead} chapters total · ${wc}/3 this week</div>
+          </div>
+          <span style="font-size:1.4rem">📖</span>
+        </div>
+        <div class="book-week-bar"><div class="book-week-fill" style="width:${Math.min(100,(wc/3)*100)}%"></div></div>
+        <div style="font-size:.7rem;color:var(--muted)">${3-wc} more ${3-wc===1?'chapter':'chapters'} to hit your weekly goal</div>
+      </div>`;
+  }
+
+  renderDay();
+</script>
+</body>
+</html>
